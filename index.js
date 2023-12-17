@@ -2,20 +2,35 @@ const PORT = process.env.PORT || 8000
 const express = require('express')
 const cors = require('cors')
 const { OpenAI } = require("openai")
-const { createServer } = require('http')
+//const { createServer } = require('http')
 const path = require('path')
-
+const { Server } = require("socket.io")
+const { useAzureSocketIO } = require("@azure/web-pubsub-socket.io")
 
 require('dotenv').config()
 const app = express()
-const server = createServer(app)
-const io = require("socket.io")(server, {
+//const server = createServer(app)
+
+const io = new Server(app, {
+    cors: {
+        origin: process.env.FRONTEND_URL,
+        methods: ["GET", "POST"],
+        credentials: true
+    }
+})
+
+useAzureSocketIO(io, {
+    hub: "Hub",
+    connectionString: process.env.WEB_PUBSUB_CONNECTION_STRING
+})
+
+/*const io = require("socket.io")(server, {
     cors: {
       origin: process.env.FRONTEND_URL, //|| 'http://localhost:3000'
       methods: ["GET", "POST"],
       credentials: true
     }
-  })
+  })*/
 
 app.use(cors({ origin: process.env.FRONTEND_URL })) // || 'http://localhost:3000'
 console.log("Frontend URL:", process.env.FRONTEND_URL);
@@ -72,4 +87,4 @@ io.on('connection', (socket) => {
 
 
 
-server.listen(PORT, () => console.log('Your server is running on PORT ' + PORT))
+io.listen(PORT, () => console.log('Your server is running on PORT ' + PORT))
